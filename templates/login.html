@@ -1,0 +1,38 @@
+{% extends "base.html" %}
+{% block content %}
+	<div class="container-fluid login">
+		<div class="main col-lg-12">
+			<div class="tabbable form-login">
+				<ul class="nav nav-tabs tab">
+					<li class="active">
+						<a href="#tab1" data-toggle="tab" class="">LOGIN</a>
+					</li>
+					<li><a href="#tab2" data-toggle="tab" class="">SIGN UP</a>
+					</li>
+				</ul>
+				<div class="tab-content">
+					<div class="tab-pane active" id="tab1">
+						<br>
+						<h3 class="font text-center">LOGIN</h3>
+						<form class="login-form" action="/login" method="post">
+							{% csrf_token %}
+						    {{ loginForm }}
+						    <br>
+						    <input type="submit" value="Log In" id="login-submit"/>
+						</form>
+					</div>
+					<div class="tab-pane" id="tab2">
+						<br>
+						<h3 class="font text-center">SIGN UP</h3>
+						<form class="login-form" action="/signin" method="post">
+							{% csrf_token %}
+						    {{ loginForm }}
+						    <br>
+						    <input type="submit" value="Sign Up" id="login-submit"/>
+						</form>
+					</div>
+				</div>
+			</div>
+		</div>
+	</div>
+{% endblock %}

@@ -1,0 +1,187 @@
+{% extends "base.html" %}
+{% block content %}
+	<div class="container-fluid todos">
+		<nav class="navbar navbar-default">
+			<div class="container-fluid">
+				<!-- Brand and toggle get grouped for better mobile display -->
+				<div class="navbar-header">
+				  	<ul class="nav navbar-nav">
+					    <li class="active"><a href="/todos">TODOS</a></li>
+					    <li><a href="#AddModal" data-toggle="modal">Add Todo</a></li>
+					</ul>
+					<ul class="nav navbar-nav pull-right">
+						<li><a href="/">Log Out</a></li>
+					</ul>
+				</div>
+			</div>
+		</nav>
+		<div class="container">
+			<div class="todos_list">
+				{% for todo in todos %}
+					<div class="col-lg-12 todo" id="{{todo.name}}">
+						<div class="col-lg-6">
+							<h3 class="font" id="name">{{todo.name}}</h3>
+							<h5 class="font align" id="description">&nbsp;&nbsp;&nbsp;&nbsp;{{todo.description}}</h5>
+							<hr>
+							<h5 class="font align">Comments :</h6>
+							<div class="comments">
+								{% for comment in todo.comments %}
+									<h6 class="font align">{{comment.description}}</h6>
+								{% endfor %}
+							</div>						
+							<hr>
+							<h5 class="font align">Add Comment : </h5>	
+							<input type="text" placeholder="Comment" class="comment">
+							<button class="editing-btn" id="add_comment" name="{{todo.name}}">Add Comment</button>
+							<br>
+							<br>
+							<p class="error"></p>
+						</div>
+						<div class="col-lg-6">
+							<div class="editing pull-right" id="{{todo.id}}">
+								<button class="editing-btn edit" data-toggle="modal">Edit</button>
+								<button class="editing-btn delete">Delete</button>
+							</div>
+						</div>
+					</div>
+				{% endfor %}
+				<div class="modal fade" id="mymodal">
+					<div class="modal-dialog">
+						<div class="modal-content">
+							<div class="modal-header">
+								<button class="close" data-dismiss="modal">&times;</button>
+								<h4 class="font">Edit</h4>
+
+							</div><!--end of modal-header-->
+							<div class="modal-body">
+								<form class="edit-form">
+									<label>Name:</label>
+									<input type="text" id="todo_name" name="todo_name">
+									<br>
+									<label>Description:</label>
+									<input type="text" id="todo_description" name="todo_description">
+									<br>
+									<button class="editing-btn" id="update">Update</button>			
+								</form>
+							</div><!--end of modal-body-->
+						</div><!--end modal-content-->
+					</div><!--end modal-dialog-->
+				</div><!--end of mymodal-->
+
+				<div class="modal fade" id="AddModal">
+					<div class="modal-dialog">
+						<div class="modal-content">
+							<div class="modal-header">
+								<button class="close" data-dismiss="modal">&times;</button>
+								<h4 class="font">Edit</h4>
+
+							</div><!--end of modal-header-->
+							<div class="modal-body">
+								<form class="add-form" action="/add_todo" method="post">
+									<label>Name:</label>
+									<input type="text" id="todo_name" name="todo_name">
+									<br>
+									<label>Description:</label>
+									<input type="text" id="todo_description" name="todo_description">
+									<br>
+									<button class="editing-btn" id="add">Add</button>			
+								</form>
+							</div><!--end of modal-body-->
+						</div><!--end modal-content-->
+					</div><!--end modal-dialog-->
+				</div><!--end of mymodal-->
+			</div>
+		</div>
+	</div>
+	<script type="text/javascript">
+		
+		$("#add_comment").click(function(e){
+			var data = {};
+			var comment = $(".comment").val();
+			var todo_name = $(this).attr('name');
+			data['comment'] = comment;
+			data['todo_name'] = todo_name;
+			console.log(data);
+			if(comment != '')
+			{
+				$.ajax({
+			    	url: 'comment',
+			    	type: 'POST',
+			    	data:JSON.stringify(data),
+					success: function(data){
+						console.log(data);
+			 	    },	
+			 	    error:function(error){
+			 	    	console.log(error);
+			 	    }
+				});
+			}
+			else{
+				$(".error").html('Comment it Right');
+			}
+		});
+
+		$(".edit").click(function(e){
+			var todo_id = $(this).parent().attr("id");
+			$.ajax({
+		    	url: 'todo/'+todo_id,
+		    	type: 'GET',
+		    	dataType:'json',
+				success: function(data){
+					console.log(data);
+					$("#todo_name").val(data['name']);
+					$("#todo_description").val(data['description']);
+					$("#update").attr('name', data['id']);
+					$('#mymodal').modal('show');
+		 	    },	
+		 	    error:function(error){
+		 	    	console.log(error);
+		 	    }
+			});
+			
+		});
+
+		$("#update").click(function(e){
+			e.preventDefault();
+			var todo_id = $(this).attr("name");
+			$.ajax({
+		    	url: 'edit/'+todo_id,
+		    	type: 'POST',
+		    	dataType:'json',
+		    	data:$(".edit-form").serialize(),
+				success: function(data){
+					console.log(data);
+					$("#"+data['prev_name'] +" .col-lg-6 #name").html(data['name']);
+					$("#"+data['prev_name'] +" .col-lg-6 #description").html(data['description']);
+					$('#mymodal').modal('hide');
+		 	    },	
+		 	    error:function(error){
+		 	    	console.log(error);
+		 	    }
+			});
+			
+		});
+
+		$(".delete").click(function(e){
+			e.preventDefault();
+			var todo_id = $(this).parent().attr("id");
+			var con = confirm("Are you Sure you Want Delete this TODO ?");
+			if(con == true)
+			{
+				$.ajax({
+			    	url: 'delete/'+todo_id,
+			    	type: 'GET',
+			    	dataType:'json',
+					success: function(data){
+						$("#"+data['name']).remove();
+			 	    },	
+			 	    error:function(error){
+			 	    	console.log(error);
+			 	    }
+				});
+				
+			}
+		});
+
+	</script>
+{% endblock %}
