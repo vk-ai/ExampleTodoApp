@@ -2,7 +2,7 @@ backports.shutil-get-terminal-size==1.0.0
 decorator==4.0.10
 Django==1.8
 ipdb==0.10.0
-ipython==4.2.0
+ipython==7.16.3
 ipython-genutils==0.1.0
 MySQL-python==1.2.5
 pathlib2==2.1.0
