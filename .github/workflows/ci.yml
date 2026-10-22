@@ -3,6 +3,8 @@ on: [push, pull_request]
 jobs:
   smoke:
     runs-on: ubuntu-latest
+    env:
+      DJANGO_SECRET_KEY: ci-only-not-a-secret
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5

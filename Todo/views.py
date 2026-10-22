@@ -1,8 +1,8 @@
 import json
 
 from django.shortcuts import render, redirect
-from django.http import HttpResponse
-from django.views.decorators.csrf import csrf_exempt
+from django.http import HttpResponse, HttpResponseForbidden, HttpResponseNotFound
+from django.views.decorators.http import require_POST
 
 from Todo.forms import LoginForm
 from Todo.models import User, Todo, Comment
@@ -11,6 +11,21 @@ from Todo.models import User, Todo, Comment
 def _is_ajax(request):
     # HttpRequest.is_ajax() was removed in Django 4.0; jQuery sends this header.
     return request.headers.get('x-requested-with') == 'XMLHttpRequest'
+
+
+def _current_user(request):
+    name = request.session.get('User')
+    if not name:
+        return None
+    return User.objects.filter(name=name).first()
+
+
+def _own_todo(request, todo_id):
+    """Return the caller's todo, or None if not logged in / not theirs."""
+    user = _current_user(request)
+    if user is None:
+        return None
+    return Todo.objects.filter(pk=todo_id, user=user).first()
 
 
 def home(request):
@@ -25,8 +40,9 @@ def login(request):
         form = LoginForm(request.POST)
         if form.is_valid():
             user = User.objects.filter(name=form.data.get('name')).first()
-            if user and user.password == form.data.get('password'):
-                request.session['User'] = form.data.get('name')
+            if user and user.check_password(form.data.get('password')):
+                request.session.cycle_key()  # prevent session fixation
+                request.session['User'] = user.name
                 return redirect('todos')
             else:
                 return redirect('home')
@@ -57,8 +73,12 @@ def signin(request):
     if request.method == 'POST':
         form = LoginForm(request.POST)
         if form.is_valid():
-            form.save()
-            request.session['User'] = form.data.get('name')
+            if User.objects.filter(name=form.cleaned_data['name']).exists():
+                # Names identify sessions; never create a second account with the same name.
+                return redirect('home')
+            user = form.save()
+            request.session.cycle_key()
+            request.session['User'] = user.name
             return redirect('todos')
     else:
         return redirect('home')
@@ -71,7 +91,9 @@ def comment(request):
 
 
 def single_todo(request, todo_id):
-    todo = Todo.objects.get(pk=todo_id)
+    todo = _own_todo(request, todo_id)
+    if todo is None:
+        return HttpResponseNotFound()
     single_todo = dict()
     single_todo['id'] = todo.id
     single_todo['name'] = todo.name
@@ -79,11 +101,13 @@ def single_todo(request, todo_id):
     return HttpResponse(json.dumps(single_todo))
 
 
-@csrf_exempt
+@require_POST
 def edit(request, todo_id):
     if request.session.get('User') and _is_ajax(request):
         single_todo = dict()
-        todo = Todo.objects.get(pk=todo_id)
+        todo = _own_todo(request, todo_id)
+        if todo is None:
+            return HttpResponseNotFound()
         single_todo['prev_name'] = todo.name
         todo.name = request.POST.get('todo_name')
         todo.description = request.POST.get('todo_description')
@@ -94,9 +118,12 @@ def edit(request, todo_id):
         return HttpResponse(json.dumps(single_todo))
 
 
+@require_POST
 def delete(request, todo_id):
     if request.session.get('User') and _is_ajax(request):
-        todo = Todo.objects.get(pk=todo_id)
+        todo = _own_todo(request, todo_id)
+        if todo is None:
+            return HttpResponseNotFound()
         todo.is_deleted = True
         todo.save()
         single_todo = dict()
@@ -106,7 +133,7 @@ def delete(request, todo_id):
         return HttpResponse(json.dumps(single_todo))
 
 
-@csrf_exempt
+@require_POST
 def add_todo(request):
     if request.session.get('User') is not None:
         user = User.objects.filter(name=request.session.get('User')).first()
