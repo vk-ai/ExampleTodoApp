@@ -40,12 +40,11 @@ INSTALLED_APPS = (
     'Todo'
 )
 
-MIDDLEWARE_CLASSES = (
+MIDDLEWARE = (
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
-    'django.contrib.auth.middleware.SessionAuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
     'django.middleware.security.SecurityMiddleware',
@@ -75,14 +74,26 @@ WSGI_APPLICATION = 'UserTodo.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/1.8/ref/settings/#databases
 
-DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.mysql',
-        'NAME': 'UserTodo',
-        'USER': 'root',
-        'PASSWORD': 123456,
+# MySQL when TODO_DB_ENGINE=mysql (needs mysqlclient), SQLite otherwise.
+if os.environ.get('TODO_DB_ENGINE') == 'mysql':
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.mysql',
+            'NAME': os.environ.get('TODO_DB_NAME', 'UserTodo'),
+            'USER': os.environ.get('TODO_DB_USER', 'root'),
+            'PASSWORD': os.environ.get('TODO_DB_PASSWORD', ''),
+            'HOST': os.environ.get('TODO_DB_HOST', '127.0.0.1'),
+        }
     }
-}
+else:
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.sqlite3',
+            'NAME': os.path.join(BASE_DIR, 'db.sqlite3'),
+        }
+    }
+
+DEFAULT_AUTO_FIELD = 'django.db.models.AutoField'
 
 
 # Internationalization
@@ -94,7 +105,6 @@ TIME_ZONE = 'UTC'
 
 USE_I18N = True
 
-USE_L10N = True
 
 USE_TZ = True
 
