@@ -36,11 +36,11 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name='todo',
             name='user',
-            field=models.ForeignKey(to='Todo.User'),
+            field=models.ForeignKey(to='Todo.User', on_delete=models.CASCADE),
         ),
         migrations.AddField(
             model_name='comment',
             name='todo',
-            field=models.ForeignKey(to='Todo.Todo'),
+            field=models.ForeignKey(to='Todo.Todo', on_delete=models.CASCADE),
         ),
     ]

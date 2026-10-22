@@ -6,7 +6,11 @@ from django.views.decorators.csrf import csrf_exempt
 
 from Todo.forms import LoginForm
 from Todo.models import User, Todo, Comment
-# Create your views here.
+
+
+def _is_ajax(request):
+    # HttpRequest.is_ajax() was removed in Django 4.0; jQuery sends this header.
+    return request.headers.get('x-requested-with') == 'XMLHttpRequest'
 
 
 def home(request):
@@ -62,7 +66,7 @@ def signin(request):
 
 def comment(request):
     if request.session.get('User') is not None:
-        print request.session.get('User')
+        print(request.session.get('User'))
         return HttpResponse("Sucess")
 
 
@@ -77,7 +81,7 @@ def single_todo(request, todo_id):
 
 @csrf_exempt
 def edit(request, todo_id):
-    if request.session.get('User') and request.is_ajax():
+    if request.session.get('User') and _is_ajax(request):
         single_todo = dict()
         todo = Todo.objects.get(pk=todo_id)
         single_todo['prev_name'] = todo.name
@@ -91,7 +95,7 @@ def edit(request, todo_id):
 
 
 def delete(request, todo_id):
-    if request.session.get('User') and request.is_ajax():
+    if request.session.get('User') and _is_ajax(request):
         todo = Todo.objects.get(pk=todo_id)
         todo.is_deleted = True
         todo.save()

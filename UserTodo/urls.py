@@ -1,19 +1,17 @@
-from django.conf.urls import include, url
 from django.contrib import admin
+from django.urls import path, re_path
+
+from Todo import views
 
 urlpatterns = [
-    # Examples:
-    # url(r'^$', 'UserTodo.views.home', name='home'),
-    # url(r'^blog/', include('blog.urls')),
-
-    url(r'^admin/', include(admin.site.urls)),
-    url(r'^$', 'Todo.views.home', name='home'),
-    url(r'^login', 'Todo.views.login', name='login'),
-    url(r'^signin', 'Todo.views.signin', name='signin'),
-    url(r'^todos', 'Todo.views.todos', name='todos'),
-    url(r'^comment', 'Todo.views.comment', name='comment'),
-    url(r'^add_todo', 'Todo.views.add_todo', name='add_todo'),
-    url(r'^todo/(?P<todo_id>\d+)/', 'Todo.views.single_todo', name='single_todo'),
-    url(r'^edit/(?P<todo_id>\d+)', 'Todo.views.edit', name='edit'),
-    url(r'^delete/(?P<todo_id>\d+)/', 'Todo.views.delete', name='delete'),
+    path('admin/', admin.site.urls),
+    re_path(r'^$', views.home, name='home'),
+    re_path(r'^login', views.login, name='login'),
+    re_path(r'^signin', views.signin, name='signin'),
+    re_path(r'^todos', views.todos, name='todos'),
+    re_path(r'^comment', views.comment, name='comment'),
+    re_path(r'^add_todo', views.add_todo, name='add_todo'),
+    re_path(r'^todo/(?P<todo_id>\d+)/', views.single_todo, name='single_todo'),
+    re_path(r'^edit/(?P<todo_id>\d+)', views.edit, name='edit'),
+    re_path(r'^delete/(?P<todo_id>\d+)/', views.delete, name='delete'),
 ]
